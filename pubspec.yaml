@@ -1,5 +1,5 @@
 name: ggml
-description: ggml bindings for Dart language, with FFI and Native Assets
+description: ggml (Tensor library for machine learning) bindings for Dart language, with FFI and Native Assets
 version: 0.0.1
 repository: https://github.com/rainyl/ggml.dart
 

@@ -21,9 +21,9 @@ class GGMLBackend extends GgObject<gg.ggml_backend> {
     }
   }
 
-  GgmlBackendBufferType getDefaultBufferType() {
+  GGMLBackendBufferType getDefaultBufferType() {
     final p = gg.ggml_backend_get_default_buffer_type(ptr);
-    return GgmlBackendBufferType.fromPtr(p);
+    return GGMLBackendBufferType.fromPtr(p);
   }
 
   bool isCpu() => gg.ggml_backend_is_cpu(ptr);
@@ -36,9 +36,9 @@ class GGMLBackend extends GgObject<gg.ggml_backend> {
     }
   }
 
-  int graphCompute(GgmlCGraph cgraph) => gg.ggml_backend_graph_compute(ptr, cgraph.ptr);
+  int graphCompute(GGMLCGraph cgraph) => gg.ggml_backend_graph_compute(ptr, cgraph.ptr);
 
-  void tensorGet(GgmlTensor tensor, int offset, int size) {}// TODO
+  void tensorGet(GGMLTensor tensor, int offset, int size) {}// TODO
 
   static final finalizer =
       ggFinalizer<ffi.Pointer<gg.ggml_backend>>(ffi.Native.addressOf(gg.ggml_backend_free));

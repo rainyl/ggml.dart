@@ -7,31 +7,31 @@ import 'base.dart';
 import 'struct.dart';
 import 'ggml.g.dart' as gg;
 
-class GgmlBackendBuffer extends GgObject<gg.ggml_backend_buffer> {
-  GgmlBackendBuffer.fromPtr(super.ptr) : super.fromPtr() {
+class GGMLBackendBuffer extends GgObject<gg.ggml_backend_buffer> {
+  GGMLBackendBuffer.fromPtr(super.ptr) : super.fromPtr() {
     finalizer.attach(this, ptr.cast());
   }
 
   static final finalizer = ggFinalizer<ffi.Pointer<gg.ggml_backend_buffer>>(ffi.Native.addressOf(gg.ggml_backend_buffer_free));
 }
 
-class GgmlBackendBufferType extends GgObject<gg.ggml_backend_buffer_type> {
-  GgmlBackendBufferType.fromPtr(super.ptr) : super.fromPtr();
+class GGMLBackendBufferType extends GgObject<gg.ggml_backend_buffer_type> {
+  GGMLBackendBufferType.fromPtr(super.ptr) : super.fromPtr();
 }
 
 // Tensor allocator
-class GgmlTallocr extends GgStruct<gg.ggml_tallocr> {
-  GgmlTallocr.fromPtr(super.ptr) : super.fromPtr() {
+class GGMLTallocr extends GgStruct<gg.ggml_tallocr> {
+  GGMLTallocr.fromPtr(super.ptr) : super.fromPtr() {
     finalizer.attach(this, ptr.cast());
   }
 
-  factory GgmlTallocr(GgmlBackendBuffer buffer) {
+  factory GGMLTallocr(GGMLBackendBuffer buffer) {
     final s = gg.ggml_tallocr_new(buffer.ptr);
     final p = calloc<gg.ggml_tallocr>()..ref = s;
-    return GgmlTallocr.fromPtr(p);
+    return GGMLTallocr.fromPtr(p);
   }
 
-  void alloc(GgmlTensor tensor) => gg.ggml_tallocr_alloc(ptr, tensor.ptr);
+  void alloc(GGMLTensor tensor) => gg.ggml_tallocr_alloc(ptr, tensor.ptr);
 
   static final finalizer = ggFinalizer(calloc.nativeFree);
 
@@ -60,23 +60,23 @@ class GgmlTallocr extends GgStruct<gg.ggml_tallocr> {
 // special tensor flags for use with the graph allocator:
 //   ggml_set_input(): all input tensors are allocated at the beginning of the graph in non-overlapping addresses
 //   ggml_set_output(): output tensors are never freed and never overwritten
-class GgmlGallocr extends GgObject<gg.ggml_gallocr> {
-  GgmlGallocr.fromPtr(super.ptr) : super.fromPtr() {
+class GGMLGAllocr extends GgObject<gg.ggml_gallocr> {
+  GGMLGAllocr.fromPtr(super.ptr) : super.fromPtr() {
     finalizer.attach(this, ptr.cast());
   }
 
-  factory GgmlGallocr(GgmlBackendBufferType buft, [int? nBufs]) {
+  factory GGMLGAllocr(GGMLBackendBufferType buft, [int? nBufs]) {
     final p = nBufs == null
         ? gg.ggml_gallocr_new(buft.ptr)
         : gg.ggml_gallocr_new_n(ffi.Pointer.fromAddress(buft.ptr.address), nBufs);
-    return GgmlGallocr.fromPtr(p);
+    return GGMLGAllocr.fromPtr(p);
   }
 
   // pre-allocate buffers from a measure graph - does not allocate or modify the graph
   // call with a worst-case graph to avoid buffer reallocations
   // not strictly required for single buffer usage: ggml_gallocr_alloc_graph will reallocate the buffers automatically if needed
   // returns false if the buffer allocation failed
-  bool reserve(GgmlCGraph graph) => gg.ggml_gallocr_reserve(ptr, graph.ptr);
+  bool reserve(GGMLCGraph graph) => gg.ggml_gallocr_reserve(ptr, graph.ptr);
   // bool reserveN(GgmlCGraph graph, List<int> nodeBufferIds, List<int> leafBufferIds) {
   //   return using<bool>((arena) {
   //     final nodeBufferIdsPtr = arena<ffi.Int32>(nodeBufferIds.length);
@@ -94,7 +94,7 @@ class GgmlGallocr extends GgObject<gg.ggml_gallocr> {
 
   // automatic reallocation if the topology changes when using a single buffer
   // returns false if using multiple buffers and a re-allocation is needed (call ggml_gallocr_reserve_n first to set the node buffers)
-  bool allocGraph(GgmlCGraph graph) => gg.ggml_gallocr_alloc_graph(ptr, graph.ptr);
+  bool allocGraph(GGMLCGraph graph) => gg.ggml_gallocr_alloc_graph(ptr, graph.ptr);
 
   int getBufferSize(int bufId) => gg.ggml_gallocr_get_buffer_size(ptr, bufId);
 
@@ -103,12 +103,12 @@ class GgmlGallocr extends GgObject<gg.ggml_gallocr> {
 
 // Utils
 // Create a buffer and allocate all the tensors in a ggml_context
-GgmlBackendBuffer allocCtxTensorsFromBuft(GgmlContext ctx, GgmlBackendBufferType buft) {
+GGMLBackendBuffer allocCtxTensorsFromBuft(GGMLContext ctx, GGMLBackendBufferType buft) {
   final p = gg.ggml_backend_alloc_ctx_tensors_from_buft(ctx.ptr, buft.ptr);
-  return GgmlBackendBuffer.fromPtr(p);
+  return GGMLBackendBuffer.fromPtr(p);
 }
 
-GgmlBackendBuffer allocCtxTensors(GgmlContext ctx, GGMLBackend backend) {
+GGMLBackendBuffer allocCtxTensors(GGMLContext ctx, GGMLBackend backend) {
   final p = gg.ggml_backend_alloc_ctx_tensors(ctx.ptr, backend.ptr);
-  return GgmlBackendBuffer.fromPtr(p);
+  return GGMLBackendBuffer.fromPtr(p);
 }
