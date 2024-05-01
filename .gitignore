@@ -1,6 +1,7 @@
 # See https://www.dartlang.org/guides/libraries/private-files
 
 # Files and directories created by pub
+.vscode/
 .dart_tool/
 .packages
 build/
@@ -25,3 +26,6 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# FVM Version Cache
+.fvm/

@@ -1,0 +1,57 @@
+# Run with `dart run ffigen --config ffigen.yaml`.
+name: GgmlBindings
+description: |
+  Bindings for `src/ggml.h`.
+
+  Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
+output: "lib/src/ggml.g.dart"
+ffi-native:
+  assetId: "package:ggml/ggml.dart"
+compiler-opts: "-Isrc -Isrc/ggml/include/ggml"
+sort: true
+headers:
+  entry-points:
+    - "src/ggml.h"
+    - "src/ggml/ggml.h"
+    - "src/ggml/ggml-backend.h"
+    - "src/ggml/ggml-alloc.h"
+  include-directives:
+    - "src/ggml.h"
+    - "src/ggml/ggml.h"
+    - "src/ggml/ggml-backend.h"
+    - "src/ggml/ggml-alloc.h"
+enums:
+  rename:
+      "ggml_backend_buffer_usage": "GgmlBackendBufferUsage"
+      "ggml_backend_type": "GgmlBackendType"
+      "ggml_cgraph_eval_order": "GgmlCGraphEvalOrder"
+      "ggml_ftype": "GgmlFtype"
+      "ggml_linesearch": "GgmlLinesearch"
+      "ggml_log_level": "GgmlLogLevel"
+      "ggml_numa_strategy": "GgmlNumaStrategy"
+      "ggml_object_type": "GgmlObjectType"
+      "ggml_op": "GgmlOp"
+      "ggml_op_pool": "GgmlOpPool"
+      "ggml_opt_result": "GgmlOptResult"
+      "ggml_opt_type": "GgmlOptType"
+      "ggml_prec": "GgmlPrec"
+      "ggml_sort_order": "GgmlSortOrder"
+      "ggml_status": "GgmlStatus"
+      "ggml_task_type": "GgmlTaskType"
+      "ggml_tensor_flag": "GgmlTensorFlag"
+      "ggml_type": "GgmlType"
+      "ggml_unary_op": "GgmlUnaryOp"
+      "gguf_type": "GgufType"
+preamble: |
+  // ignore_for_file: always_specify_types, unused_field
+  // ignore_for_file: camel_case_types
+  // ignore_for_file: non_constant_identifier_names
+  // coverage:ignore-file
+  //
+  // ggml - ggml bindings for Dart language
+  // Author: Rainyl
+  // License: Apache-2.0
+  // Date: 2024/04/22
+comments:
+  style: any
+  length: full

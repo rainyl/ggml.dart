@@ -1,0 +1,20 @@
+name: ggml
+description: ggml bindings for Dart language, with FFI and Native Assets
+version: 0.0.1
+repository: https://github.com/rainyl/ggml.dart
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  ffi: ^2.1.0
+  equatable: ^2.0.5
+  native_assets_cli: ^0.5.4
+  logging: ^1.2.0
+  change_case: ^2.0.1
+  path: ^1.9.0
+
+dev_dependencies:
+  ffigen: ^11.0.0
+  lints: ^3.0.0
+  test: ^1.24.0
