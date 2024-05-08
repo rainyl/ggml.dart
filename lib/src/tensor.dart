@@ -10,48 +10,28 @@ import 'context.dart';
 import 'ggml.g.dart' as gg;
 
 class Tensor extends GGStruct<gg.ggml_tensor> {
-  Tensor.fromPtr(super.ptr) : super.fromPtr() {
+  Tensor.fromPtr(super.ptr, [bool allowNull = false]) : super.fromPtr() {
+    if (ptr == ffi.nullptr && !allowNull) throw Exception('Got null pointer');
     // finalizer.attach(this, ptr.cast());
   }
 
-  factory Tensor(Context ctx, int type, List<int> ne) {
+  factory Tensor(Context ctx, int type, List<int> ne, {List<num>? data}) {
     final pne = calloc<ffi.Int64>(ne.length);
     for (int i = 0; i < ne.length; i++) {
       pne[i] = ne[i];
     }
-    final p = gg.ggml_new_tensor(ctx.ptr, type, ne.length, pne);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(gg.ggml_new_tensor(ctx.ptr, type, ne.length, pne))..setData(data);
   }
 
-  factory Tensor.new1D(Context ctx, int type, int ne0, {List<num>? data}) {
-    final res = Tensor.fromPtr(gg.ggml_new_tensor_1d(ctx.ptr, type, ne0));
-    if (data != null) {
-      res.setData(data);
-    }
-    return res;
-  }
-  factory Tensor.new2D(Context ctx, int type, int ne0, int ne1, {List<num>? data}) {
-    final res = Tensor.fromPtr(gg.ggml_new_tensor_2d(ctx.ptr, type, ne0, ne1));
-    if (data != null) {
-      res.setData(data);
-    }
-    return res;
-  }
+  factory Tensor.new1D(Context ctx, int type, int ne0, {List<num>? data}) =>
+      Tensor.fromPtr(gg.ggml_new_tensor_1d(ctx.ptr, type, ne0))..setData(data);
+  factory Tensor.new2D(Context ctx, int type, int ne0, int ne1, {List<num>? data}) =>
+      Tensor.fromPtr(gg.ggml_new_tensor_2d(ctx.ptr, type, ne0, ne1))..setData(data);
+  factory Tensor.new3D(Context ctx, int type, int ne0, int ne1, int ne2, {List<num>? data}) =>
+      Tensor.fromPtr(gg.ggml_new_tensor_3d(ctx.ptr, type, ne0, ne1, ne2))..setData(data);
+  factory Tensor.new4D(Context ctx, int type, int ne0, int ne1, int ne2, int ne3, {List<num>? data}) =>
+      Tensor.fromPtr(gg.ggml_new_tensor_4d(ctx.ptr, type, ne0, ne1, ne2, ne3));
 
-  factory Tensor.new3D(Context ctx, int type, int ne0, int ne1, int ne2, {List<num>? data}) {
-    final res = Tensor.fromPtr(gg.ggml_new_tensor_3d(ctx.ptr, type, ne0, ne1, ne2));
-    if (data != null) {
-      res.setData(data);
-    }
-    return res;
-  }
-  factory Tensor.new4D(Context ctx, int type, int ne0, int ne1, int ne2, int ne3, {List<num>? data}) {
-    final res = Tensor.fromPtr(gg.ggml_new_tensor_4d(ctx.ptr, type, ne0, ne1, ne2, ne3));
-    if (data != null) {
-      res.setData(data);
-    }
-    return res;
-  }
   factory Tensor.newI32(Context ctx, int value) => Tensor.fromPtr(gg.ggml_new_i32(ctx.ptr, value));
   factory Tensor.newF32(Context ctx, double value) => Tensor.fromPtr(gg.ggml_new_f32(ctx.ptr, value));
   factory Tensor.zeros(Context ctx, List<int> shape, {int type = GGML_TYPE_F32}) {
@@ -64,8 +44,9 @@ class Tensor extends GGStruct<gg.ggml_tensor> {
   Tensor setI32(int value) => Tensor.fromPtr(gg.ggml_set_i32(ptr, value));
   Tensor setF32(double value) => Tensor.fromPtr(gg.ggml_set_f32(ptr, value));
 
-  void setData(List<num> data) {
-    switch (type) {
+  void setData(List<num>? data) {
+    if (data == null) return;
+    switch (dtype) {
       case GGML_TYPE_I8:
         final p = this.data.cast<ffi.Int8>();
         for (var i = 0; i < data.length; i++) {
@@ -130,11 +111,11 @@ class Tensor extends GGStruct<gg.ggml_tensor> {
   void setF32_ND(int i0, int i1, int i2, int i3, double value) =>
       gg.ggml_set_f32_nd(ptr, i0, i1, i2, i3, value);
 
-  List<int> get ne => List.generate(4, (i) => ref.ne[i]);
+  List<int> get ne => List.generate(4, (i) => ref.ne[i], growable: false);
   ffi.Pointer<ffi.Void> get data => gg.ggml_get_data(ptr);
   ffi.Pointer<ffi.Float> get dataF32 => gg.ggml_get_data_f32(ptr);
 
-  int get unaryOp => gg.ggml_get_unary_op(ptr);
+  // int getUnaryOp() => gg.ggml_get_unary_op(ptr);
   String get name {
     return using<String>((arena) {
       final pname = gg.ggml_get_name(ptr);
@@ -168,71 +149,116 @@ class Tensor extends GGStruct<gg.ggml_tensor> {
   bool get isMatrix => gg.ggml_is_matrix(ptr);
   bool get is3D => gg.ggml_is_3d(ptr);
   int get nDims => gg.ggml_n_dims(ptr);
-  int get type => ref.type;
+  int get dtype => ref.type;
+  int get op => ref.op;
+  set op(int value) => ref.op = value;
 
   bool areSameShape(Tensor other) => gg.ggml_are_same_shape(ptr, other.ptr);
 
   List<T> toList<T extends num>() {
+    final dataPtr = data;
+    return List.generate(nelements, (i) => dataPtr.get(dtype, i), growable: false);
+  }
+
+  List<List<List<List<T>>>> toList4D<T extends num>() {
+    final shape = ne;
+    final dataPtr = data;
     return List.generate(
-      nelements,
-      (i) => switch (type) {
-        GGML_TYPE_I8 => data.cast<ffi.Int8>()[i] as T,
-        GGML_TYPE_I16 => data.cast<ffi.Int16>()[i] as T,
-        GGML_TYPE_I32 => data.cast<ffi.Int32>()[i] as T,
-        GGML_TYPE_I64 => data.cast<ffi.Int64>()[i] as T,
-        GGML_TYPE_F16 => data.cast<gg.ggml_fp16_t>()[i] as T,
-        GGML_TYPE_F32 => data.cast<ffi.Float>()[i] as T,
-        GGML_TYPE_F64 => data.cast<ffi.Double>()[i] as T,
-        // GGML_TYPE_Q4_0 => data.cast<ffi.>()
-        _ => throw UnimplementedError(),
-      },
+      shape[3],
+      (i) => List.generate(
+        shape[2],
+        (j) => List.generate(
+          shape[1],
+          (k) => List.generate(
+            shape[0],
+            (l) => dataPtr.get<T>(
+              dtype,
+              l + k * shape[0] + j * shape[0] * shape[1] + i * shape[0] * shape[1] * shape[2],
+            ),
+            growable: false,
+          ),
+          growable: false,
+        ),
+        growable: false,
+      ),
+      growable: false,
     );
   }
 
-  // List<List<List<List<num>>>> toListND(){} TODO
+  List<List<List<T>>> toList3D<T extends num>() {
+    final shape = ne;
+    final dataPtr = data;
+    return List.generate(
+      shape[2],
+      (j) => List.generate(
+        shape[1],
+        (k) => List.generate(
+          shape[0],
+          (l) => dataPtr.get<T>(dtype, l + k * shape[0] + j * shape[0] * shape[1]),
+          growable: false,
+        ),
+        growable: false,
+      ),
+      growable: false,
+    );
+  }
 
-  List<T> get<T extends num>() {
-    switch (type) {
+  List<List<T>> toList2D<T extends num>() {
+    final shape = ne;
+    final dataPtr = data;
+    return List.generate(
+      shape[1],
+      (k) => List.generate(
+        shape[0],
+        (l) => dataPtr.get<T>(dtype, l + k * shape[0]),
+        growable: false,
+      ),
+      growable: false,
+    );
+  }
+
+  List<num> tensorGet() {
+    switch (dtype) {
       case GGML_TYPE_I8:
         final cdata = calloc<ffi.Int8>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_I16:
         final cdata = calloc<ffi.Int16>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_I32:
         final cdata = calloc<ffi.Int32>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_I64:
         final cdata = calloc<ffi.Int64>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_F16:
         final cdata = calloc<gg.ggml_fp16_t>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_F32:
         final cdata = calloc<ffi.Float>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       case GGML_TYPE_F64:
         final cdata = calloc<ffi.Double>(nelements);
         gg.ggml_backend_tensor_get(ptr, cdata.cast(), 0, nbytes);
-        final res = List.generate(nelements, (i) => cdata[i] as T);
+        final res = List.generate(nelements, (i) => cdata[i]);
         calloc.free(cdata);
         return res;
       default:
@@ -240,9 +266,9 @@ class Tensor extends GGStruct<gg.ggml_tensor> {
     }
   }
 
-  void set<T extends num>(List<num> data) {
+  void tensorSet(List<num> data) {
     int size = 0;
-    switch (type) {
+    switch (dtype) {
       case GGML_TYPE_I8:
         final cdata = calloc<ffi.Int8>(data.length);
         for (var i = 0; i < data.length; i++) {
@@ -305,6 +331,21 @@ class Tensor extends GGStruct<gg.ggml_tensor> {
 
   @override
   String toString() {
-    return "Tensor(address=0x${ptr.address.toRadixString(16)})";
+    return "Tensor(address=0x${ptr.address.toRadixString(16)}, ne=$ne, dtype=$dtype, data=0x${data.address.toRadixString(16)})";
+  }
+}
+
+extension _PointerVoidExtension on ffi.Pointer<ffi.Void> {
+  T get<T extends num>(int dtype, int idx) {
+    return switch (dtype) {
+      GGML_TYPE_I8 => cast<ffi.Int8>()[idx] as T,
+      GGML_TYPE_I16 => cast<ffi.Int16>()[idx] as T,
+      GGML_TYPE_I32 => cast<ffi.Int32>()[idx] as T,
+      GGML_TYPE_I64 => cast<ffi.Int64>()[idx] as T,
+      GGML_TYPE_F16 => cast<gg.ggml_fp16_t>()[idx] as T,
+      GGML_TYPE_F32 => cast<ffi.Float>()[idx] as T,
+      GGML_TYPE_F64 => cast<ffi.Double>()[idx] as T,
+      _ => throw UnsupportedError("dtype $dtype not supported"),
+    };
   }
 }

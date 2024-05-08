@@ -7,19 +7,21 @@ description: |
 output: "lib/src/ggml.g.dart"
 ffi-native:
   assetId: "package:ggml/ggml.dart"
-compiler-opts: "-Isrc -Isrc/ggml/include/ggml"
+compiler-opts: "-Isrc -Isrc/ggml/include"
 sort: true
 headers:
   entry-points:
-    - "src/ggml.h"
-    - "src/ggml/ggml.h"
-    - "src/ggml/ggml-backend.h"
-    - "src/ggml/ggml-alloc.h"
+    - "src/ggml/include/ggml.h"
+    - "src/ggml/include/ggml/ggml.h"
+    - "src/ggml/include/ggml/ggml-backend.h"
+    - "src/ggml/include/ggml/ggml-alloc.h"
+    - "src/ggml.dart.h"
   include-directives:
-    - "src/ggml.h"
-    - "src/ggml/ggml.h"
-    - "src/ggml/ggml-backend.h"
-    - "src/ggml/ggml-alloc.h"
+    - "src/ggml/include/ggml.h"
+    - "src/ggml/include/ggml/ggml.h"
+    - "src/ggml/include/ggml/ggml-backend.h"
+    - "src/ggml/include/ggml/ggml-alloc.h"
+    - "src/ggml.dart.h"
 enums:
   rename:
       "ggml_backend_buffer_usage": "GgmlBackendBufferUsage"

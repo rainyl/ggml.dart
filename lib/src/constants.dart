@@ -304,3 +304,22 @@ const int GGUF_TYPE_FLOAT64 = 12;
 
 /// marks the end of the enum
 const int GGUF_TYPE_COUNT = 13;
+const int GGML_DEFAULT_GRAPH_SIZE = 2048;
+const int GGML_DEFAULT_N_THREADS = 4;
+const int GGML_EXIT_ABORTED = 1;
+const int GGML_EXIT_SUCCESS = 0;
+const int GGML_FILE_MAGIC = 0x67676d6c; // "ggml"
+const int GGML_FILE_VERSION = 1;
+const int GGML_MAX_CONTEXTS = 64;
+const int GGML_MAX_DIMS = 4;
+const int GGML_MAX_NAME = 64;
+const int GGML_MAX_OP_PARAMS = 64;
+const int GGML_MAX_PARAMS = 2048;
+const int GGML_MAX_SRC = 10;
+const int GGML_MEM_ALIGN = 16;
+const int GGML_N_TASKS_MAX = -1;
+const int GGML_QNT_VERSION = 2;
+const int GGML_QNT_VERSION_FACTOR = 1000;
+const int GGUF_DEFAULT_ALIGNMENT = 32;
+const String GGUF_MAGIC = 'GGUF';
+const int GGUF_VERSION = 3;

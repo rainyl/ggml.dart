@@ -128,8 +128,8 @@ class Backend extends GGBase<gg.ggml_backend> {
   // void tensorSet(Tensor tensor, ffi.Pointer<ffi.Void> data, int offset, int size) =>
   //     gg.ggml_backend_tensor_set(tensor.ptr, data, offset, size);
 
-  List<T> tensorGet<T extends num>(Tensor tensor) => tensor.get<T>();
-  void tensorSet<T extends num>(Tensor tensor, List<T> data) => tensor.set<T>(data);
+  List<num> tensorGet(Tensor tensor) => tensor.tensorGet();
+  void tensorSet(Tensor tensor, List<num> data) => tensor.tensorSet(data);
 
   void synchronize() => gg.ggml_backend_synchronize(ptr);
 

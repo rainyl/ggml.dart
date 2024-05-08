@@ -10,42 +10,62 @@ import 'tensor.dart';
 import 'ggml.g.dart' as gg;
 
 class Context extends GGBase<gg.ggml_context> {
-  Context._(super.ptr) : super.fromPtr() {
+  Context.fromPtr(super.ptr) : super.fromPtr() {
     finalizer.attach(this, ptr.cast());
+  }
+
+  factory Context.empty() {
+    final params = InitParams();
+    return Context.init(params);
   }
 
   factory Context.init(InitParams params) {
     final p = gg.ggml_init(params.ref);
-    return Context._(p);
+    return Context.fromPtr(p);
   }
 
-  Tensor newTensor(int type, List<int> ne) {
+  bool get noAlloc => gg.ggml_get_no_alloc(ptr);
+  set noAlloc(bool value) => gg.ggml_set_no_alloc(ptr, value);
+
+  ffi.Pointer<ffi.Void> get memBuffer => gg.ggml_get_mem_buffer(ptr);
+  // set memBuffer(ffi.Pointer<ffi.Void> value) => gg.ggml_set_mem_buffer(ptr, value);
+
+  int get memSize => gg.ggml_get_mem_size(ptr);
+  // set memSize(int value) => gg.ggml_set_mem_size(ptr, value);
+
+  int get maxTensorSize => gg.ggml_get_max_tensor_size(ptr);
+
+  set scratch(Scratch value) => gg.ggml_set_scratch(ptr, value.ref);
+
+  int get usedMem => gg.ggml_used_mem(ptr);
+
+  Tensor newTensor(int type, List<int> ne, {List<num>? data}) {
     final pne = calloc<ffi.Int64>(ne.length);
     for (int i = 0; i < ne.length; i++) {
       pne[i] = ne[i];
     }
     final p = gg.ggml_new_tensor(ptr, type, ne.length, pne);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(p)..setData(data);
   }
 
-  Tensor newTensor1D(int type, int ne0) {
+  Tensor newTensor1D(int type, int ne0, {List<num>? data}) {
     final p = gg.ggml_new_tensor_1d(ptr, type, ne0);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(p)..setData(data);
   }
 
-  Tensor newTensor2D(int type, int ne0, int ne1) {
+  Tensor newTensor2D(int type, int ne0, int ne1, {List<num>? data}) {
     final p = gg.ggml_new_tensor_2d(ptr, type, ne0, ne1);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(p)..setData(data);
   }
 
-  Tensor newTensor3D(int type, int ne0, int ne1, int ne2) {
+  Tensor newTensor3D(int type, int ne0, int ne1, int ne2, {List<num>? data}) {
     final p = gg.ggml_new_tensor_3d(ptr, type, ne0, ne1, ne2);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(p)..setData(data);
   }
 
-  Tensor newTensor4D(int type, int ne0, int ne1, int ne2, int ne3) {
+  Tensor newTensor4D(int type, int ne0, int ne1, int ne2, int ne3, {List<num>? data}) {
     final p = gg.ggml_new_tensor_4d(ptr, type, ne0, ne1, ne2, ne3);
-    return Tensor.fromPtr(p);
+    return Tensor.fromPtr(p)..setData(data);
   }
 
   Tensor dupTensor(Tensor src) {
@@ -71,7 +91,7 @@ class Context extends GGBase<gg.ggml_context> {
   Tensor getTensor(String name) {
     return using<Tensor>((arena) {
       final cname = name.toNativeUtf8(allocator: arena);
-      final p = gg.ggml_get_next_tensor(ptr, cname.cast());
+      final p = gg.ggml_get_tensor(ptr, cname.cast());
       return Tensor.fromPtr(p);
     });
   }
@@ -820,6 +840,12 @@ class Context extends GGBase<gg.ggml_context> {
     return CGraph.fromPtr(p);
   }
 
+  // same as ggml_graph_compute() but the work data is allocated as a part of the context
+  // note: the drawback of this API is that you must have ensured that the context has enough memory for the work data
+  // ggml_status
+  int graphComputeWithCtx(CGraph graph, int nThreads) =>
+      gg.ggml_graph_compute_with_ctx(ptr, graph.ptr, nThreads);
+
   // build gradient checkpointing backward graph gb for gf using provided checkpoints
   // gb_tmp will contain original backward graph with rewritten backward process nodes,
   // but without the second forward pass nodes.
@@ -907,9 +933,11 @@ class GGUFContext extends GGBase<gg.gguf_context> {
   }
 
   factory GGUFContext.fromFile(String path, GGUFInitParams params) {
-    final cpath = path.toNativeUtf8(allocator: calloc);
-    final ctx = gg.gguf_init_from_file(cpath.cast(), params.ref);
-    return GGUFContext.fromPtr(ctx);
+    return using<GGUFContext>((arena) {
+      final cpath = path.toNativeUtf8(allocator: arena);
+      final ctx = gg.gguf_init_from_file(cpath.cast(), params.ref);
+      return GGUFContext.fromPtr(ctx);
+    });
   }
 
   int get version => gg.gguf_get_version(ptr);
@@ -1111,14 +1139,22 @@ class GGUFContext extends GGBase<gg.gguf_context> {
 }
 
 class GGUFInitParams extends GGStruct<gg.gguf_init_params> {
-  GGUFInitParams._(super.ptr) : super.fromPtr() {
+  GGUFInitParams.fromPtr(super.ptr) : super.fromPtr() {
     // finalizer.attach(this, ptr.cast());
   }
 
-  factory GGUFInitParams() {
-    final p = calloc<gg.gguf_init_params>();
-    return GGUFInitParams._(p);
+  factory GGUFInitParams({bool? noAlloc, Context? ctx}) {
+    final p = calloc<gg.gguf_init_params>()
+      ..ref.no_alloc = noAlloc ?? false
+      ..ref.ctx = ctx == null ? ffi.nullptr : ffi.Pointer.fromAddress(ctx.ptr.address);
+    return GGUFInitParams.fromPtr(p);
   }
+
+  bool get noAlloc => ref.no_alloc;
+  Context? get ctx => ref.ctx == ffi.nullptr ? null : Context.fromPtr(ref.ctx.value);
+
+  @override
+  gg.gguf_init_params get ref => ptr.ref;
 
   // static final finalizer = ffi.NativeFinalizer(calloc.nativeFree);
 }

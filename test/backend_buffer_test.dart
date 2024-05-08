@@ -30,8 +30,8 @@ void testBuffer(gg.Backend backend, gg.BackendBufferType buft) {
   expect(tensor.data, greaterThanOrEqualTo(buffer.getBase()));
 
   final data = List.generate(n, (i) => i.toDouble());
-  backend.tensorSet<double>(tensor, data);
-  final data2 = backend.tensorGet<double>(tensor);
+  backend.tensorSet(tensor, data);
+  final data2 = backend.tensorGet(tensor);
   expect(data2, data);
 }
 

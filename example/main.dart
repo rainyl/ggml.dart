@@ -3,7 +3,7 @@ import 'package:ggml/ggml.dart' as gg;
 void main() {
   const int numTensors = 2;
     final backend = gg.Backend(gg.GGML_BACKEND_TYPE_CPU);
-    final overhead = gg.ggmlTensorOverhead();
+    final overhead = gg.ggml_tensor_overhead();
     final params = gg.InitParams(memSize: overhead * numTensors + 2 * 1024 * 1024, noAlloc: true);
     final ctx = gg.Context.init(params);
     

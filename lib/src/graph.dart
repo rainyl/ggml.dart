@@ -30,6 +30,18 @@ class CGraph extends GGStruct<gg.ggml_cgraph> {
     return CGraph.fromPtr(p);
   }
 
+  int get size => ref.size;
+  int get nNodes => ref.n_nodes;
+  int get nLeafs => ref.n_leafs;
+  int get order => ref.order;
+  int get perfRuns => ref.perf_runs;
+  int get perfCycles => ref.perf_cycles;
+  int get perfTimeUs => ref.perf_time_us;
+
+  Tensor getNode(int idx) => Tensor.fromPtr(ref.nodes[idx]);
+  Tensor getGrad(int idx) => Tensor.fromPtr(ref.grads[idx]);
+  Tensor getLeaf(int idx) => Tensor.fromPtr(ref.leafs[idx]);
+
   gg.ggml_cgraph view(int i0, int i1) => gg.ggml_graph_view(ptr, i0, i1);
 
   CGraph cpy() {
@@ -83,7 +95,8 @@ class CGraph extends GGStruct<gg.ggml_cgraph> {
     gg.ggml_build_forward_expand(ptr, tensor.ptr);
   }
 
-  gg.ggml_cgraph get reg => ptr.ref;
+  @override
+  gg.ggml_cgraph get ref => ptr.ref;
 }
 
 class CPlan extends GGStruct<gg.ggml_cplan> {

@@ -11,6 +11,8 @@ abstract class GGBase<T extends ffi.NativeType> with EquatableMixin implements f
   GGBase.fromPtr(this.ptr);
   ffi.Pointer<T> ptr;
 
+  bool get isNull => ptr == ffi.nullptr;
+
   @override
   List<Object> get props => [ptr.address];
 }
@@ -26,32 +28,6 @@ typedef NativeFinalizerFunctionT<T extends ffi.NativeType>
 
 ffi.NativeFinalizer ggFinalizer<T extends ffi.NativeType>(NativeFinalizerFunctionT<T> func) =>
     ffi.NativeFinalizer(func.cast<ffi.NativeFinalizerFunction>());
-
-// abstract class GValueType<T extends ffi.SizedNativeType> {
-//   const GValueType();
-// }
-
-// abstract class u8 extends GValueType<ffi.Uint8> {
-//   static Type get type => ffi.Uint8;
-// }
-
-// class i8 extends GValueType<ffi.Int8> {}
-
-// class u16 extends GValueType<ffi.Int16> {}
-
-// class i16 extends GValueType<ffi.Uint8> {}
-
-// class u32 extends GValueType<ffi.Int32> {}
-
-// class i32 extends GValueType<ffi.Uint8> {}
-
-// class u64 extends GValueType<ffi.Uint64> {}
-
-// class i64 extends GValueType<ffi.Int64> {}
-
-// class f32 extends GValueType<ffi.Float> {}
-
-// class f64 extends GValueType<ffi.Double> {}
 
 class GGObject extends GGStruct<gg.ggml_object> {
   GGObject._(super.ptr) : super.fromPtr() {
